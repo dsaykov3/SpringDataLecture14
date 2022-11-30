@@ -2,6 +2,7 @@ package net.codejava.spring.controller;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -14,60 +15,81 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
  * This controller routes accesses to the application to the appropriate
- * hanlder methods. 
- * @author www.codejava.net
+ * hanlder methods.
  *
+ * @author www.codejava.net
  */
 @Controller
 public class HomeController {
 
-	@Autowired
-	private ContactDAO contactDAO;
+    @Autowired
+    private ContactDAO contactDAO;
 
-	@Autowired
-	private ContactDAOJPARepository contactDAOJPARepository;
+    @Autowired
+    private ContactDAOJPARepository contactDAOJPARepository;
 
-	@RequestMapping(value="/")
-	public ModelAndView listContact(ModelAndView model) throws IOException{
-		List<Contact> listContact = contactDAOJPARepository.findAll();
-		model.addObject("listContact", listContact);
-		model.setViewName("home");
-		
-		return model;
-	}
-	
-	@RequestMapping(value = "/newContact", method = RequestMethod.GET)
-	public ModelAndView newContact(ModelAndView model) {
-		Contact newContact = new Contact();
-		model.addObject("contact", newContact);
-		model.setViewName("ContactForm");
-		return model;
-	}
-	
-	@RequestMapping(value = "/saveContact", method = RequestMethod.POST)
-	public ModelAndView saveContact(@ModelAttribute Contact contact) {
-		contactDAO.saveOrUpdate(contact);		
-		return new ModelAndView("redirect:/");
-	}
-	
-	@RequestMapping(value = "/deleteContact", method = RequestMethod.GET)
-	public ModelAndView deleteContact(HttpServletRequest request) {
-		int contactId = Integer.parseInt(request.getParameter("id"));
-		contactDAO.delete(contactId);
-		return new ModelAndView("redirect:/");
-	}
-	
-	@RequestMapping(value = "/editContact", method = RequestMethod.GET)
-	public ModelAndView editContact(HttpServletRequest request) {
-		int contactId = Integer.parseInt(request.getParameter("id"));
-		Contact contact = contactDAO.get(contactId);
-		ModelAndView model = new ModelAndView("ContactForm");
-		model.addObject("contact", contact);
-		
-		return model;
-	}
+    @RequestMapping(value = "/")
+    public ModelAndView listContact(ModelAndView model) throws IOException {
+        List<Contact> listContact = contactDAOJPARepository.findAll();
+        model.addObject("listContact", listContact);
+        model.setViewName("home");
+
+        return model;
+    }
+
+    @RequestMapping(value = "/find", method = RequestMethod.POST)
+    public ModelAndView findContacts(@RequestParam("searhTerm") String searhTerm, ModelAndView model) throws IOException {
+        System.out.println("SearchTerm="+searhTerm);
+        List<Contact> listContacts = contactDAOJPARepository.findByNameLikeOrEmailLike(searhTerm+"%", searhTerm+"%");
+        System.out.println("listContacts="+listContacts.size());
+        model.addObject("listContact", listContacts);
+        model.addObject("searhTerm", searhTerm);
+        model.setViewName("home");
+        return model;
+    }
+
+    @RequestMapping(value = "/newContact", method = RequestMethod.GET)
+    public ModelAndView newContact(ModelAndView model) {
+        Contact newContact = new Contact();
+        model.addObject("contact", newContact);
+        model.setViewName("ContactForm");
+        return model;
+    }
+
+    @RequestMapping(value = "/saveContact", method = RequestMethod.POST)
+    public ModelAndView saveContact(@ModelAttribute Contact contact) {
+        ModelAndView model = new ModelAndView("redirect:/");
+        try {
+            contactDAO.saveOrUpdate(contact);
+        } catch (Exception e) {
+            model.setViewName("ContactForm");
+            model.addObject("contact", contact);
+            model.addObject("message", "Wrong email");
+            return model;
+        }
+        return model;
+    }
+
+
+    @RequestMapping(value = "/deleteContact", method = RequestMethod.GET)
+    public ModelAndView deleteContact(HttpServletRequest request) {
+        int contactId = Integer.parseInt(request.getParameter("id"));
+        contactDAO.delete(contactId);
+        return new ModelAndView("redirect:/");
+    }
+
+    @RequestMapping(value = "/editContact", method = RequestMethod.GET)
+    public ModelAndView editContact(HttpServletRequest request) {
+        int contactId = Integer.parseInt(request.getParameter("id"));
+        Contact contact = contactDAO.get(contactId);
+        ModelAndView model = new ModelAndView("ContactForm");
+        model.addObject("contact", contact);
+
+        return model;
+    }
 }

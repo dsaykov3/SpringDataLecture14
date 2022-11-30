@@ -7,12 +7,13 @@ package net.codejava.spring.dao;
 
 import java.util.List;
 import javax.transaction.Transactional;
+
 import net.codejava.spring.model.Contact;
+import net.codejava.spring.util.Validator;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
 /**
- *
  * @author Dimitar
  */
 @Repository
@@ -25,6 +26,10 @@ public class ContactDAOJpaImpl extends AbstractDAO<Contact> implements ContactDA
 
     @Transactional(Transactional.TxType.REQUIRED)
     public void saveOrUpdate(Contact contact) {
+
+        if (!Validator.patternMatchesEmail(contact.getEmail())) {
+            throw new RuntimeException("The email is not valid");
+        }
         if (contact.getId() != 0) {
             update(contact);
         } else {

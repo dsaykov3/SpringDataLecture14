@@ -33,6 +33,9 @@
 			<tr>
 				<td colspan="2" align="center"><input type="submit" value="Save"></td>
 			</tr>
+			<tr>
+			    <td> <span style="color:red;">${message}</span></td>
+			</tr>
 		</table>
 		</form:form>
 	</div>
